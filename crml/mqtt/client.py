@@ -10,6 +10,10 @@ class MQTTBridge:
         self._settings = settings
         self._client: aiomqtt.Client | None = None
 
+    @property
+    def is_connected(self) -> bool:
+        return self._client is not None
+
     async def publish(self, topic: str, payload: str) -> None:
         if self._client:
             await self._client.publish(topic, payload)
