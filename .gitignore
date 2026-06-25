@@ -10,3 +10,4 @@ data/processed/
 models/
 logs/
 .env
+CLAUDE.md
