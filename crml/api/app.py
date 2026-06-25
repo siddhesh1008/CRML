@@ -1,13 +1,14 @@
 from fastapi import FastAPI, Request
 from pydantic import BaseModel
 from crml import __version__
-from crml.api.routes import inference, models, data
+from crml.api.routes import inference, models, data, task
 
 app = FastAPI(title="CRML", version=__version__, docs_url="/docs")
 
 app.include_router(inference.router)
 app.include_router(models.router)
 app.include_router(data.router)
+app.include_router(task.router)
 
 
 def attach_bridge(bridge) -> None:
@@ -20,6 +21,10 @@ def attach_registry(registry) -> None:
 
 def attach_store(store) -> None:
     app.state.store = store
+
+
+def attach_planner(planner) -> None:
+    app.state.planner = planner
 
 
 class HealthResponse(BaseModel):

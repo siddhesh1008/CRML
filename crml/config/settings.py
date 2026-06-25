@@ -21,6 +21,12 @@ class ApiSettings(BaseModel):
     port: int = 8100
 
 
+class OllamaSettings(BaseModel):
+    host: str = "ollama"
+    port: int = 11434
+    model: str = "llama3.1:8b"
+
+
 class CrmlSettings(BaseModel):
     log_level: str = "INFO"
     data_dir: Path = Path("data")
@@ -32,6 +38,7 @@ class Settings(BaseSettings):
     crml: CrmlSettings = CrmlSettings()
     mqtt: MqttSettings = MqttSettings()
     api: ApiSettings = ApiSettings()
+    ollama: OllamaSettings = OllamaSettings()
 
     model_config = {"env_file": ".env", "env_nested_delimiter": "__"}
 

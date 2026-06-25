@@ -8,7 +8,9 @@ from crml.mqtt.client import MQTTBridge
 from crml.mqtt.handlers import set_store
 from crml.registry.registry import ModelRegistry
 from crml.pipeline.store import DataStore
-from crml.api.app import app, attach_bridge, attach_registry, attach_store
+from crml.llm.client import OllamaClient
+from crml.llm.planner import TaskPlanner
+from crml.api.app import app, attach_bridge, attach_registry, attach_store, attach_planner
 
 
 async def main():
@@ -23,6 +25,15 @@ async def main():
     registry = ModelRegistry(settings.crml.models_dir)
     registry.start()
     attach_registry(registry)
+
+    ollama = OllamaClient(settings.ollama.host, settings.ollama.port, settings.ollama.model)
+    if await ollama.is_available():
+        logger.info("Ollama connected at {}:{} model={}", settings.ollama.host, settings.ollama.port, settings.ollama.model)
+        planner = TaskPlanner(ollama)
+    else:
+        logger.warning("Ollama not available at {}:{} — task planning disabled", settings.ollama.host, settings.ollama.port)
+        planner = None
+    attach_planner(planner)
 
     bridge = MQTTBridge(settings.mqtt)
     attach_bridge(bridge)
