@@ -5,7 +5,7 @@ from loguru import logger
 from crml.config.settings import load_settings
 from crml.core.logging import setup_logging
 from crml.mqtt.client import MQTTBridge
-from crml.mqtt.handlers import set_store
+from crml.mqtt.handlers import set_store, set_bridge
 from crml.registry.registry import ModelRegistry
 from crml.pipeline.store import DataStore
 from crml.llm.client import OllamaClient
@@ -36,6 +36,7 @@ async def main():
     attach_planner(planner)
 
     bridge = MQTTBridge(settings.mqtt)
+    set_bridge(bridge)
     attach_bridge(bridge)
 
     server = uvicorn.Server(uvicorn.Config(

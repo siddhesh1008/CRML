@@ -1,13 +1,20 @@
 import json
 from loguru import logger
 from crml.pipeline.store import DataStore
+from crml.ha.discovery import state_payload
 
 _store: DataStore | None = None
+_bridge = None
 
 
 def set_store(store: DataStore) -> None:
     global _store
     _store = store
+
+
+def set_bridge(bridge) -> None:
+    global _bridge
+    _bridge = bridge
 
 
 async def dispatch(topic: str, payload: bytes) -> None:
@@ -39,3 +46,6 @@ async def _handle_status(robot_id: str, data) -> None:
     logger.info("Status | robot={} data={}", robot_id, data)
     if _store:
         _store.record(robot_id, "status", data)
+    if _bridge:
+        topic, payload = state_payload(robot_id, data)
+        await _bridge.publish(topic, payload)

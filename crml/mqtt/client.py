@@ -3,6 +3,9 @@ import aiomqtt
 from loguru import logger
 from crml.config.settings import MqttSettings
 from crml.mqtt.handlers import dispatch
+from crml.ha.discovery import discovery_payloads, available_topic
+
+_KNOWN_ROBOTS: set[str] = set()
 
 
 class MQTTBridge:
@@ -17,6 +20,15 @@ class MQTTBridge:
     async def publish(self, topic: str, payload: str) -> None:
         if self._client:
             await self._client.publish(topic, payload)
+
+    async def announce_robot(self, robot_id: str) -> None:
+        if robot_id in _KNOWN_ROBOTS:
+            return
+        _KNOWN_ROBOTS.add(robot_id)
+        for topic, payload in discovery_payloads(robot_id):
+            await self.publish(topic, payload)
+        await self.publish(available_topic(robot_id), "online")
+        logger.info("Announced robot '{}' to Home Assistant", robot_id)
 
     async def run(self) -> None:
         interval = 5
@@ -34,7 +46,11 @@ class MQTTBridge:
                                 self._settings.topics.subscribe)
                     interval = 5
                     async for message in client.messages:
-                        await dispatch(str(message.topic), message.payload)
+                        topic = str(message.topic)
+                        parts = topic.split("/")
+                        if parts[0] == "robots" and len(parts) >= 3:
+                            await self.announce_robot(parts[1])
+                        await dispatch(topic, message.payload)
             except aiomqtt.MqttError as e:
                 self._client = None
                 logger.warning("MQTT disconnected: {}. Retrying in {}s", e, interval)
