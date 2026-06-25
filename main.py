@@ -5,8 +5,10 @@ from loguru import logger
 from crml.config.settings import load_settings
 from crml.core.logging import setup_logging
 from crml.mqtt.client import MQTTBridge
+from crml.mqtt.handlers import set_store
 from crml.registry.registry import ModelRegistry
-from crml.api.app import app, attach_bridge, attach_registry
+from crml.pipeline.store import DataStore
+from crml.api.app import app, attach_bridge, attach_registry, attach_store
 
 
 async def main():
@@ -14,12 +16,16 @@ async def main():
     setup_logging(settings.crml.log_level, settings.crml.logs_dir)
     logger.info("CRML starting up")
 
-    bridge = MQTTBridge(settings.mqtt)
-    attach_bridge(bridge)
+    store = DataStore(settings.crml.data_dir)
+    set_store(store)
+    attach_store(store)
 
     registry = ModelRegistry(settings.crml.models_dir)
     registry.start()
     attach_registry(registry)
+
+    bridge = MQTTBridge(settings.mqtt)
+    attach_bridge(bridge)
 
     server = uvicorn.Server(uvicorn.Config(
         app,
@@ -28,7 +34,6 @@ async def main():
         log_level="warning",
     ))
 
-    # Step 6 will add the data pipeline task here
     await asyncio.gather(
         bridge.run(),
         server.serve(),
