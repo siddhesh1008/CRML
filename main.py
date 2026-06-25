@@ -1,23 +1,23 @@
+import asyncio
 from pathlib import Path
+from loguru import logger
 from crml.config.settings import load_settings
 from crml.core.logging import setup_logging
-from loguru import logger
+from crml.mqtt.client import MQTTBridge
 
 
-def main():
+async def main():
     settings = load_settings(Path("config.yaml"))
     setup_logging(settings.crml.log_level, settings.crml.logs_dir)
-    logger.info("CRML v{} starting up", "0.1.0")
-    logger.info("MQTT -> {}:{}", settings.mqtt.host, settings.mqtt.port)
-    logger.info("API  -> {}:{}", settings.api.host, settings.api.port)
+    logger.info("CRML starting up")
 
-    # Steps 3–6 will wire in MQTT, API, registry, and pipeline here
-    logger.info("CRML ready")
+    bridge = MQTTBridge(settings.mqtt)
 
-    import time
-    while True:
-        time.sleep(60)
+    # Steps 4–6 will add more tasks here (API, registry, pipeline)
+    await asyncio.gather(
+        bridge.run(),
+    )
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
