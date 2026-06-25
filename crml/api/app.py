@@ -13,6 +13,10 @@ def attach_bridge(bridge) -> None:
     app.state.bridge = bridge
 
 
+def attach_registry(registry) -> None:
+    app.state.registry = registry
+
+
 class HealthResponse(BaseModel):
     status: str
     version: str
