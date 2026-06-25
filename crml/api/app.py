@@ -9,6 +9,10 @@ app.include_router(inference.router)
 app.include_router(models.router)
 
 
+def attach_bridge(bridge) -> None:
+    app.state.bridge = bridge
+
+
 class HealthResponse(BaseModel):
     status: str
     version: str

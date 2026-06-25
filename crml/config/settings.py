@@ -37,8 +37,17 @@ class Settings(BaseSettings):
 
 
 def load_settings(config_path: Path = Path("config.yaml")) -> Settings:
+    import os
     if config_path.exists():
         with open(config_path) as f:
-            data = yaml.safe_load(f)
-        return Settings(**data)
+            data = yaml.safe_load(f) or {}
+        # Populate env vars from YAML only if not already set — env vars win
+        for section, values in data.items():
+            if isinstance(values, dict):
+                for key, val in values.items():
+                    if isinstance(val, dict):
+                        continue  # skip nested objects; not safe to stringify
+                    env_key = f"{section.upper()}__{key.upper()}"
+                    if env_key not in os.environ:
+                        os.environ[env_key] = str(val)
     return Settings()
